@@ -1,0 +1,5 @@
+# Ignore all pycache files
+*.pyc
+
+# Ignore all arquives in core migrations
+core/migrations
