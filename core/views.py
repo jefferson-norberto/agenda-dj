@@ -27,6 +27,22 @@ def submit_login(request):
             messages.error(request, 'Usuário ou senha invélido')
     return redirect('/')
 
+@login_required(login_url='/login/')
+def submit_event(request):
+    if request.POST:
+        title = request.POST.get('title')
+        event_date = request.POST.get('event_date')
+        description = request.POST.get('description')
+        user = request.user
+        local = request.POST.get('local')
+        Event.objects.create(title=title, 
+                             event_date=event_date, 
+                             description=description, 
+                             local=local,
+                             user=user)
+    return redirect('/')
+    
+
 def get_local_event(request, title_event):
     event = Event.objects.get(title=title_event)
     return HttpResponse('O local do evento é {}'.format(event.local))
@@ -37,6 +53,10 @@ def list_events(request):
     event = Event.objects.filter(user=user)
     data = {'eventos': event}
     return render(request, 'agenda.html', data)
+
+@login_required(login_url='/login/')
+def create_event(request):
+    return render(request, 'event.html')
 
 def index(request):
     return redirect('/agenda/')
