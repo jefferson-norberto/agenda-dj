@@ -1,10 +1,11 @@
-from turtle import title
-from urllib import response
 from django.shortcuts import render, HttpResponse, redirect
 from core.models import Event
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib import messages
+from datetime import datetime, timedelta
+from django.http.response import Http404, JsonResponse
 
 # Create your views here.
 
@@ -55,12 +56,16 @@ def submit_event(request):
 @login_required(login_url='/login/')
 def delete_event(request, id_event):
     user = request.user
-    event = Event.objects.get(id=id_event)
+    try:
+        event = Event.objects.get(id=id_event)
+    except:
+        raise Http404()
     if user == event.user:
         event.delete()
+    else:
+        raise Http404()
     return redirect('/')
     
-
 def get_local_event(request, title_event):
     event = Event.objects.get(title=title_event)
     return HttpResponse('O local do evento é {}'.format(event.local))
@@ -68,7 +73,8 @@ def get_local_event(request, title_event):
 @login_required(login_url='/login/')
 def list_events(request):
     user = request.user
-    event = Event.objects.filter(user=user)
+    today = datetime.now() - timedelta(hours=1)
+    event = Event.objects.filter(user=user, event_date__gt=today)
     data = {'eventos': event}
     return render(request, 'agenda.html', data)
 
@@ -82,3 +88,9 @@ def create_event(request):
 
 def index(request):
     return redirect('/agenda/')
+
+#Aqui para trabalhar com outro app sem necessidade de login
+def json_list_events(request, id_user):
+    user = User.objects.get(id=id_user)
+    event = Event.objects.filter(user=user).values('id', 'title')
+    return JsonResponse(list(event), safe=False)
